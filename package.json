@@ -1,0 +1,33 @@
+{
+  "name": "mindmate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MindMate-mental-health-support-system/backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MindMate-mental-health-support-system/backend/issues"
+  },
+  "homepage": "https://github.com/MindMate-mental-health-support-system/backend#readme",
+  "dependencies": {
+    "@google/genai": "^1.43.0",
+    "@supabase/supabase-js": "^2.98.0",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "form-data": "^4.0.4",
+    "helmet": "^8.1.0",
+    "multer": "^2.0.2"
+  }
+}
