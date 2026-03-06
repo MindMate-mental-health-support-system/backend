@@ -32,10 +32,14 @@ async function authMiddleware(req, res, next) {
 
         if (error) {
           console.error('[authMiddleware] Supabase getUser error:', error.message);
-          return res.status(401).json({ error: 'Invalid or expired token' });
+          const errorCode = error.message?.includes('expired') ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID';
+          return res.status(401).json({ 
+            error: 'Unauthorized: ' + (errorCode === 'TOKEN_EXPIRED' ? 'Token expired. Please login again.' : 'Invalid token. Please login again.'),
+            errorCode 
+          });
         } else if (user) {
           userId = user.id;
-          console.log('[authMiddleware] Token Valid! UserId:', userId);
+          console.log('[authMiddleware] ✅ Token Valid! UserId:', userId);
         }
       } else {
         console.log('[authMiddleware] No token found in header');

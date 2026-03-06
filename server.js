@@ -45,11 +45,36 @@ app.use((req, res, next) => {
 });
 // ───────────────────────────────────────────────────────────────────
 
-// Route definitions
-const dataRoutes = require('./routes/dataRoutes');
-const userRoutes = require('./routes/userRoutes');
-const historyRoutes = require('./routes/historyRoutes');
-const sessionRoutes = require('./routes/sessionRoutes');
+// ── Supabase Connectivity Check ────────────────────────────────────
+console.log('🔍 [startup] Checking environment variables...');
+if (!process.env.SUPABASE_URL) {
+  console.error('❌ [startup] SUPABASE_URL not found in .env');
+  process.exit(1);
+}
+if (!process.env.SUPABASE_KEY) {
+  console.error('❌ [startup] SUPABASE_KEY not found in .env');
+  process.exit(1);
+}
+console.log('✅ [startup] Environment variables loaded');
+
+// ── Route Loading with Error Handling ──────────────────────────────
+let dataRoutes, userRoutes, historyRoutes, sessionRoutes;
+
+try {
+  console.log('🔍 [startup] Loading routes...');
+  dataRoutes = require('./routes/dataRoutes');
+  console.log('  ✅ dataRoutes loaded');
+  userRoutes = require('./routes/userRoutes');
+  console.log('  ✅ userRoutes loaded');
+  historyRoutes = require('./routes/historyRoutes');
+  console.log('  ✅ historyRoutes loaded');
+  sessionRoutes = require('./routes/sessionRoutes');
+  console.log('  ✅ sessionRoutes loaded');
+} catch (err) {
+  console.error('❌ [startup] Failed to load routes:', err.message);
+  console.error(err.stack);
+  process.exit(1);
+}
 
 // Mount Routes
 app.use('/api/data', dataRoutes);
@@ -57,9 +82,24 @@ app.use('/api/users', userRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/sessions', sessionRoutes);
 
+// ── Health Check Endpoint ──────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── Rate Limit Bypass for Tests ────────────────────────────────────
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'test') {
+    // Skip rate limiting in test mode
+    return next();
+  }
+  next();
+});
+
 // Start server
 const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✅ [server] Server running on http://localhost:${PORT}`);
+  console.log(`✅ [server] Environment: ${process.env.NODE_ENV || 'production'}`);
 });
 
 // ── Keep the event loop alive ────────────────────────────────────────
@@ -74,6 +114,37 @@ server.on('listening', () => {
     server._handle.ref();
     console.log('✅ [server] TCP handle ref\'d — event loop will stay alive.');
   }
+});
+
+// ── Graceful Shutdown Handler ──────────────────────────────────────
+const gracefulShutdown = (signal) => {
+  console.log(`\n📢 [shutdown] Received ${signal}, shutting down gracefully...`);
+  server.close(() => {
+    console.log('✅ [shutdown] Server closed');
+    process.exit(0);
+  });
+  
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    console.error('❌ [shutdown] Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+// ── Uncaught Exception Handler ────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('❌ [fatal] Uncaught Exception:', err.message);
+  console.error(err.stack);
+  process.exit(1);
+});
+
+// ── Unhandled Promise Rejection Handler ───────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ [fatal] Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 // Gracefully handle unexpected errors so the process doesn't silently die

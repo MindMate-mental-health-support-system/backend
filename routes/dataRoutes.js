@@ -9,6 +9,7 @@ const CrisisDetectionService = require('../services/crisisDetectionService');
 const ResponseService = require('../services/responseService');
 const AIContentService = require('../services/aiContentService');
 const TranscriptionService = require('../services/transcriptionService');
+const GreetingsService = require('../services/greetingsService');
 
 // Configure multer for file uploads (for voice data)
 const upload = multer({
@@ -89,13 +90,54 @@ router.post('/process', upload.single('voice'), async (req, res) => {
       console.log('✓ Text emotion detected:', emotionData);
     } else if (type === 'voice') {
       // Step 1a: Transcribe audio to text (STT → feeds into AI + crisis pipeline)
-      // Use text provided by the browser Web Speech API if available
-      userText = text || await TranscriptionService.transcribe(voiceFile);
-      console.log('✓ Audio transcribed (or provided by browser):', userText);
+      // PRIORITY: Use text provided by the browser Web Speech API if available
+      // FALLBACK: Use backend TranscriptionService only if frontend didn't provide text
+      if (text && text.trim() && !text.includes('transcription unavailable')) {
+        userText = text.trim();
+        console.log('✓ Using browser-transcribed text (Web Speech API):', userText);
+      } else {
+        console.warn('[dataRoutes] No valid text from browser. Attempting backend transcription...');
+        userText = await TranscriptionService.transcribe(voiceFile);
+      }
+      console.log(`\n\n🎤 VOICE MESSAGE TRANSCRIBED:\n"${userText}"\n\n`);
 
       // Step 1b: Run SED on the raw audio file for emotion
       emotionData = await EmotionService.detectVoiceEmotion(voiceFile);
       console.log('✓ Voice emotion detected (SED):', emotionData);
+    }
+
+    // ✨ NEW: Step 1.5 - Check if message is a greeting (BEFORE emotion detection)
+    // If it's a greeting, skip emotion detection and respond directly
+    const greetingDetected = GreetingsService.detectGreeting(userText);
+    if (greetingDetected) {
+      console.log(`✨ GREETING DETECTED: ${greetingDetected.type} (${greetingDetected.language})`);
+      const greetingResponse = GreetingsService.getRandomResponse(greetingDetected);
+      
+      if (isStreaming) {
+        res.write(`data: ${JSON.stringify({ type: 'chunk', text: greetingResponse })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done', package: {
+          success: true,
+          data: {
+            response: greetingResponse,
+            isGreeting: true,
+            greetingType: greetingDetected.type,
+            emotion: 'greeting',
+            emotionConfidence: 1.0
+          }
+        } })}\n\n`);
+        return res.end();
+      } else {
+        return res.status(200).json({
+          success: true,
+          data: {
+            response: greetingResponse,
+            isGreeting: true,
+            greetingType: greetingDetected.type,
+            emotion: 'greeting',
+            emotionConfidence: 1.0
+          }
+        });
+      }
     }
 
     // Step 2: Detect crisis indicators
@@ -332,9 +374,16 @@ router.post('/process-with-ai', upload.single('voice'), async (req, res) => {
       console.log('✓ Text emotion detected:', emotionData);
     } else if (type === 'voice') {
       // Step 1a: Transcribe audio to text (STT → feeds into AI + crisis pipeline)
-      // Use text provided by the browser Web Speech API if available
-      userText = text || await TranscriptionService.transcribe(voiceFile);
-      console.log('✓ Audio transcribed (or provided by browser):', userText);
+      // PRIORITY: Use text provided by the browser Web Speech API if available
+      // FALLBACK: Use backend TranscriptionService only if frontend didn't provide text
+      if (text && text.trim() && !text.includes('transcription unavailable')) {
+        userText = text.trim();
+        console.log('✓ Using browser-transcribed text (Web Speech API):', userText);
+      } else {
+        console.warn('[dataRoutes] No valid text from browser. Attempting backend transcription...');
+        userText = await TranscriptionService.transcribe(voiceFile);
+      }
+      console.log(`\n\n🎤 VOICE MESSAGE TRANSCRIBED:\n"${userText}"\n\n`);
 
       // Step 1b: Run SED on the raw audio file for emotion
       emotionData = await EmotionService.detectVoiceEmotion(voiceFile);

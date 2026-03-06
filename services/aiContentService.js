@@ -130,7 +130,7 @@ Guidelines:
   static async callAI(prompt, onChunk = null) {
     const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini'; // Default to gemini now
     const AI_ENDPOINT = process.env.AI_ENDPOINT || 'http://localhost:11434/api/generate';
-    const AI_MODEL = process.env.AI_MODEL || 'gemini-flash-latest';
+    const AI_MODEL = process.env.AI_MODEL || 'gemini-2.5-flash';
     const AI_API_KEY = process.env.AI_API_KEY || process.env.GEMINI_API_KEY;
 
     try {
@@ -258,7 +258,7 @@ Guidelines:
    * @param {function} onChunk - Optional callback for streaming tokens
    * @returns {Promise<string>} Generated response
    */
-  static async callGeminiStream(prompt, apiKey, model = 'gemini-flash-latest', onChunk = null) {
+  static async callGeminiStream(prompt, apiKey, model = 'gemini-2.5-flash', onChunk = null) {
     try {
       console.log(`🤖 Calling Gemini API (${model})`);
       if (!apiKey) throw new Error('GEMINI_API_KEY is missing');

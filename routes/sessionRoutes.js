@@ -109,7 +109,7 @@ router.get('/:sessionId/history', checkSupabase, authMiddleware, async (req, res
       .select('*')
       .eq('session_id', sessionId)
       .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+      .order('created_at', { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (error) {
