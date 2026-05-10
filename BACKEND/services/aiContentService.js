@@ -169,7 +169,7 @@ Guidelines:
       { name: 'Gemini Primary', call: () => AIContentService.callGeminiStream(prompt, process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_1, 'gemini-2.5-flash', onChunk) },
       { name: 'Gemini Secondary', call: () => AIContentService.callGeminiStream(prompt, process.env.GEMINI_API_KEY_2, 'gemini-2.5-flash', onChunk) },
       { name: 'Groq', call: () => AIContentService.callOpenAILike(prompt, process.env.GROQ_API_KEY, 'https://api.groq.com/openai/v1/chat/completions', 'llama-3.1-8b-instant', onChunk) },
-      { name: 'OpenRouter', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENROUTER_API_KEY, 'https://openrouter.ai/api/v1/chat/completions', 'openrouter/free', onChunk) },
+      { name: 'OpenRouter', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENROUTER_API_KEY, 'https://openrouter.ai/api/v1/chat/completions', 'google/gemini-2.5-flash:free', onChunk) },
       { name: 'OpenAI', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENAI_API_KEY, 'https://api.openai.com/v1/chat/completions', 'gpt-3.5-turbo', onChunk) }
     ];
 
