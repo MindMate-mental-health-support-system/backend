@@ -83,19 +83,6 @@ class CrisisDetectionService {
         availability: '24/7',
       },
     ],
-    SEVERE: [
-      {
-        name: 'Sangath - Mental Health Support',
-        number: '011-41198666',
-        availability: '10 AM - 6 PM',
-      },
-      {
-        name: 'TISS iCall Helpline',
-        number: '9152987821',
-        url: 'https://icallhelpline.org',
-        availability: 'Mon-Sat, 8 AM - 10 PM',
-      },
-    ],
   };
 
   /**
@@ -155,7 +142,7 @@ class CrisisDetectionService {
     }
 
     return {
-      isCrisis: highestSeverity !== null,
+      isCrisis: highestSeverity === 'CRITICAL',
       severity: highestSeverity,
       keywords: [...new Set(foundKeywords)], // Remove duplicates
       matchedSeverity: matchedSeverity,

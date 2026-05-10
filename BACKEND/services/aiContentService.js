@@ -93,6 +93,13 @@ class AIContentService {
         : `Current Emotion: ${emotion}\nTension Level: ${confidence > 0.7 ? 'High' : 'Moderate'}`;
 
     if (!isCrisis) {
+      let severityGuidelines = "3. Keep the conversation open-ended but safely guided toward emotional regulation.";
+      if (severity === 'SEVERE') {
+         severityGuidelines = "3. Provide actionable steps they can take to resolve the issue themselves, offer strong motivation, and explicitly ask if they need any further help.";
+      } else if (severity === 'MODERATE') {
+         severityGuidelines = "3. Provide positive motivation and uplifting encouragement to help them navigate their feelings.";
+      }
+
       // NORMAL PIPELINE PROMPT
       prompt = `
 User Context:
@@ -101,15 +108,15 @@ Input Method: ${inputType}
 
 User Message: "${safeUserMessage}"
 
-Please respond as MindMate, a highly professional yet empathetic mental health support AI. 
-Provide clinical-grade, compassionate guidance while maintaining professional boundaries.
+You are MindMate, a deeply humanized, empathetic, and caring friend. 
+Your goal is to provide a highly personalized response by actively blending the provided Machine-Detected Emotion & Confidence with your own analysis of the User's Message.
 
 Guidelines:
-1. Acknowledge and validate the user's emotional state using evidence-based therapeutic language.
-2. If the user's voice emotion differs from their text emotion, gently explore this underlying tension.
-3. Suggest one practical, grounding coping mechanism or mindfulness exercise.
-4. Keep the conversation open-ended but safely guided toward emotional regulation.
-5. Keep it concise (3-4 sentences). Do not use robotic prefixes. Do not diagnose.`;
+1. Speak completely like a warm, supportive human being. Do NOT sound like a clinical bot or use AI jargon.
+2. Tailor your response directly to the specific emotion provided in the context, taking the tension/confidence level into account.
+3. Validate their feelings based on their exact message. If their voice emotion differs from their text emotion, gently explore this underlying tension.
+${severityGuidelines}
+5. Keep it natural and concise (3-4 sentences max). Do not use AI prefixes like "As an AI..." or "As MindMate...".`;
     } else {
       // CRISIS PIPELINE PROMPT
       prompt = `
@@ -169,7 +176,7 @@ Guidelines:
       { name: 'Gemini Primary', call: () => AIContentService.callGeminiStream(prompt, process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_1, 'gemini-2.5-flash', onChunk) },
       { name: 'Gemini Secondary', call: () => AIContentService.callGeminiStream(prompt, process.env.GEMINI_API_KEY_2, 'gemini-2.5-flash', onChunk) },
       { name: 'Groq', call: () => AIContentService.callOpenAILike(prompt, process.env.GROQ_API_KEY, 'https://api.groq.com/openai/v1/chat/completions', 'llama-3.1-8b-instant', onChunk) },
-      { name: 'OpenRouter', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENROUTER_API_KEY, 'https://openrouter.ai/api/v1/chat/completions', 'google/gemini-2.5-flash:free', onChunk) },
+      { name: 'OpenRouter', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENROUTER_API_KEY, 'https://openrouter.ai/api/v1/chat/completions', 'google/gemini-2.0-flash-exp:free', onChunk) },
       { name: 'OpenAI', call: () => AIContentService.callOpenAILike(prompt, process.env.OPENAI_API_KEY, 'https://api.openai.com/v1/chat/completions', 'gpt-3.5-turbo', onChunk) }
     ];
 
